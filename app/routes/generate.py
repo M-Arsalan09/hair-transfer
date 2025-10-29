@@ -8,7 +8,7 @@ from app.core.utils import detect_and_align_face
 from omegaconf import OmegaConf
 import torch
 import numpy as np
-from app.services.model_loader import model
+from app.services import model_loader
 
 router = APIRouter()
 
@@ -22,7 +22,8 @@ async def generate(request: Request, source_image: UploadFile = File(...)):
     2. Trendy Haircut
     3. AI Suggested
     """
-    global model
+    # Access model through the module to get the current value
+    model = model_loader.model
     if model is None:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
 
