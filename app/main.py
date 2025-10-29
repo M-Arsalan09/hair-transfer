@@ -1,3 +1,6 @@
+# Apply compatibility patches before importing other modules
+import app.core.compat_patch
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.routes import generate

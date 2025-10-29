@@ -25,7 +25,38 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 from urllib import request
 
-from huggingface_hub import HfFolder, cached_download, hf_hub_download, model_info
+from huggingface_hub import HfFolder, hf_hub_download, model_info
+try:
+    from huggingface_hub import cached_download
+except ImportError:
+    # cached_download was removed in newer versions, create compatibility wrapper
+    def cached_download(url, cache_dir=None, force_download=False, proxies=None, 
+                       resume_download=False, local_files_only=False, use_auth_token=None, **kwargs):
+        """
+        Compatibility wrapper for cached_download using urllib for direct URL downloads.
+        For HuggingFace Hub files, use hf_hub_download instead.
+        """
+        import urllib.request
+        import os
+        from pathlib import Path
+        
+        if cache_dir:
+            cache_path = Path(cache_dir)
+            cache_path.mkdir(parents=True, exist_ok=True)
+            filename = url.split("/")[-1].split("?")[0]
+            file_path = cache_path / filename
+        else:
+            import tempfile
+            file_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        
+        if not force_download and file_path.exists():
+            return str(file_path)
+        
+        try:
+            urllib.request.urlretrieve(url, str(file_path))
+            return str(file_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to download {url}: {e}")
 from packaging import version
 
 from .. import __version__
@@ -87,9 +118,9 @@ def get_relative_imports(module_file):
         content = f.read()
 
     # Imports of the form `import .xxx`
-    relative_imports = re.findall("^\s*import\s+\.(\S+)\s*$", content, flags=re.MULTILINE)
+    relative_imports = re.findall(r"^\s*import\s+\.(\S+)\s*$", content, flags=re.MULTILINE)
     # Imports of the form `from .xxx import yyy`
-    relative_imports += re.findall("^\s*from\s+\.(\S+)\s+import", content, flags=re.MULTILINE)
+    relative_imports += re.findall(r"^\s*from\s+\.(\S+)\s+import", content, flags=re.MULTILINE)
     # Unique-ify
     return list(set(relative_imports))
 
@@ -131,9 +162,9 @@ def check_imports(filename):
         content = f.read()
 
     # Imports of the form `import xxx`
-    imports = re.findall("^\s*import\s+(\S+)\s*$", content, flags=re.MULTILINE)
+    imports = re.findall(r"^\s*import\s+(\S+)\s*$", content, flags=re.MULTILINE)
     # Imports of the form `from xxx import yyy`
-    imports += re.findall("^\s*from\s+(\S+)\s+import", content, flags=re.MULTILINE)
+    imports += re.findall(r"^\s*from\s+(\S+)\s+import", content, flags=re.MULTILINE)
     # Only keep the top-level module
     imports = [imp.split(".")[0] for imp in imports if not imp.startswith(".")]
 
