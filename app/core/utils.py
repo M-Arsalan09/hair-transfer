@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import mediapipe as mp
-import numpy as np
     
 def detect_and_align_face(input_path,
                           save_detected,

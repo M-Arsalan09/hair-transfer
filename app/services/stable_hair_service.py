@@ -1,15 +1,13 @@
-import gradio as gr
 import torch
 from PIL import Image
 import numpy as np
-from PIL import Image
 from omegaconf import OmegaConf
 import os
 import cv2
 from diffusers import DDIMScheduler, UniPCMultistepScheduler
 from diffusers.models import UNet2DConditionModel
 from .ref_encoder.latent_controlnet import ControlNetModel
-from .ref_encoder.adapter import *
+from .ref_encoder.adapter import adapter_injection, set_scale
 from .ref_encoder.reference_unet import ref_unet
 from .utils.pipeline import StableHairPipeline
 from .utils.pipeline_cn import StableDiffusionControlNetPipeline
@@ -29,7 +27,7 @@ def concatenate_images(image_files, output_file, type="pil"):
     combined.save(output_file)
 
 class StableHair:
-    def __init__(self, config="stable_hair/configs/hair_transfer.yaml", device="cuda", weight_dtype=torch.float16) -> None:
+    def __init__(self, config="app/services/configs/hair_transfer.yaml", device="cuda", weight_dtype=torch.float16) -> None:
         print("Initializing Stable Hair Pipeline...")
         self.config = OmegaConf.load(config)
         self.device = device
@@ -54,7 +52,7 @@ class StableHair:
         self.hair_encoder = ref_unet.from_pretrained(self.config.pretrained_model_path, subfolder="unet").to(device)
         _state_dict = torch.load(os.path.join(self.config.pretrained_folder, self.config.encoder_path))
         self.hair_encoder.load_state_dict(_state_dict, strict=False)
-        self.hair_adapter = adapter_injection(self.pipeline.unet, device=self.device, dtype=torch.float16, use_resampler=False)
+        self.hair_adapter = adapter_injection(self.pipeline.unet, device=self.device, dtype=weight_dtype, use_resampler=False)
         _state_dict = torch.load(os.path.join(self.config.pretrained_folder, self.config.adapter_path))
         self.hair_adapter.load_state_dict(_state_dict, strict=False)
 
