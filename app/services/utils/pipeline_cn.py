@@ -40,7 +40,7 @@ from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion.pipeline_output import StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
-from ref_encoder.latent_controlnet import ControlNetModel
+from ..ref_encoder.latent_controlnet import ControlNetModel
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 

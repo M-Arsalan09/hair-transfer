@@ -24,8 +24,8 @@ from diffusers.schedulers import (
 )
 from diffusers.utils import deprecate, logging, BaseOutput
 
-from ref_encoder.latent_controlnet import ControlNetModel
-from ref_encoder.reference_control import ReferenceAttentionControl
+from ..ref_encoder.latent_controlnet import ControlNetModel
+from ..ref_encoder.reference_control import ReferenceAttentionControl
 import torch.nn.functional as F
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name

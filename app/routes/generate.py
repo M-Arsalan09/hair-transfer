@@ -10,7 +10,7 @@ import torch
 import cv2
 import mediapipe as mp
 import numpy as np
-from services.model_loader import model
+from app.services.model_loader import model
 
 router = APIRouter()
 
