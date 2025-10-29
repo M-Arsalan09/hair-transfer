@@ -25,7 +25,50 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 from urllib import request
 
-from huggingface_hub import HfFolder, cached_download, hf_hub_download, model_info
+from huggingface_hub import HfFolder, hf_hub_download, model_info
+try:
+    from huggingface_hub import cached_download
+except ImportError:
+    # cached_download was deprecated and removed in newer versions
+    # Create a compatible wrapper for direct URL downloads
+    from urllib.request import urlretrieve
+    import tempfile
+    
+    def cached_download(url, cache_dir=None, force_download=False, proxies=None, 
+                        resume_download=False, local_files_only=False, use_auth_token=None):
+        """
+        Compatible replacement for deprecated cached_download.
+        Downloads files from direct URLs (like GitHub raw URLs).
+        """
+        if local_files_only:
+            raise EnvironmentError("Cannot download when local_files_only=True")
+        
+        # Create cache directory structure similar to huggingface_hub
+        if cache_dir is None:
+            cache_dir = os.path.expanduser(os.path.join("~", ".cache", "huggingface"))
+        
+        # Create a simple filename from URL
+        import hashlib
+        url_hash = hashlib.sha256(url.encode()).hexdigest()
+        filename = os.path.basename(url.split("?")[0])  # Get filename from URL
+        cache_path = os.path.join(cache_dir, url_hash[:8], filename)
+        
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        
+        if os.path.exists(cache_path) and not force_download:
+            return cache_path
+        
+        # Download the file
+        temp_file = cache_path + ".tmp"
+        try:
+            urlretrieve(url, temp_file)
+            os.rename(temp_file, cache_path)
+        except Exception as e:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            raise EnvironmentError(f"Failed to download {url}: {str(e)}")
+        
+        return cache_path
 from packaging import version
 
 from .. import __version__
